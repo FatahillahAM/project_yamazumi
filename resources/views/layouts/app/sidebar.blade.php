@@ -15,7 +15,12 @@
             @can('read_dashboard')
             <flux:sidebar.item icon="home" :href="route('dashboard')" :current="request()->routeIs('dashboard')">{{ __('Dashboard') }}</flux:sidebar.item>
             @endcan
-
+            <flux:sidebar.item icon="chart-bar" :href="route('menu.analyst')" :current="request()->routeIs('menu.analyst')" wire:navigate>
+                Analyst Flow
+            </flux:sidebar.item>
+            <flux:sidebar.item icon="arrow-trending-up" :href="route('menu.report')" :current="request()->routeIs('menu.report')" wire:navigate>
+                Report Analyst
+            </flux:sidebar.item>
 
             @php
             $isUserManagementActive = request()->routeIs(
@@ -26,12 +31,12 @@
             @canany(['read_role', 'read_user'])
             <flux:sidebar.group heading="Managemen User" icon="cog-6-tooth" expandable :expanded="$isUserManagementActive">
                 @can('read_role')
-                <flux:sidebar.item icon="user-group" :href="route('management.role')" :current="request()->routeIs('manajemen.role')" wire:navigate>
+                <flux:sidebar.item icon="user-group" :href="route('management.role')" :current="request()->routeIs('management.role')" wire:navigate>
                     Kelola Role
                 </flux:sidebar.item>
                 @endcan
                 @can('read_user')
-                <flux:sidebar.item icon="user" :href="route('management.user')" :current="request()->routeIs('manajemen.user')" wire:navigate>
+                <flux:sidebar.item icon="user" :href="route('management.user')" :current="request()->routeIs('management.user')" wire:navigate>
                     Kelola Pengguna
                 </flux:sidebar.item>
                 @endcan

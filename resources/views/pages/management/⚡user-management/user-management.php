@@ -26,6 +26,7 @@ new
         public $email;
         public $role_id;
         public $showUserModal = false;
+        public $password_confirmation;
 
 
         public function updatingSearch()
@@ -67,34 +68,70 @@ new
 
         public function save()
         {
-            $this->authorize('update_user');
-            $this->validate(
-                [
-                    'name' => 'required|string|max:50',
-                    'email' => 'required|email|unique:users,email',
-                    'password' => 'required|string|min:8|confirmed',
-                ]
-            );
-            $user = User::updateOrCreate(
-                ['id' => $this->userId],
-                [
+            if ($this->userId) {
+                $this->authorize('update_user');
+            } else {
+                $this->authorize('create_user');
+            }
+
+            $this->validate([
+                'name' => 'required|string|max:50',
+                'email' => 'required|email|unique:users,email,' . $this->userId,
+                'password' => $this->userId
+                    ? 'nullable|string|min:8|confirmed'
+                    : 'required|string|min:8|confirmed',
+                'role_id' => 'required|exists:roles,id',
+            ]);
+
+            if ($this->userId) {
+                // UPDATE
+                $user = User::findOrFail($this->userId);
+
+                $data = [
+                    'name' => $this->name,
+                    'email' => $this->email,
+                ];
+
+                // Hanya update password jika diisi
+                if ($this->password) {
+                    $data['password'] = Hash::make($this->password);
+                }
+
+                $user->update($data);
+                $message = 'User berhasil diperbarui!';
+            } else {
+                // CREATE
+                $user = User::create([
                     'name' => $this->name,
                     'email' => $this->email,
                     'password' => Hash::make($this->password),
-                    'email_verified_at' => $this->now() ?? null,
-                ]
-            );
+                    'email_verified_at' => now(),
+                ]);
 
-            if ($this->role_id) {
-                $role = Role::findOrFail($this->role_id);
-                $user->syncRoles([$role->name]);
+                $message = 'User berhasil dibuat!';
             }
 
-            $this->dispatch('swal-toast', icon: 'success', title: 'Berhasil', text: $this->roleId
-                ? 'User berhasil diperbarui!'
-                : 'User berhasil dibuat!');
+            // Sync Role
+            $role = Role::findOrFail($this->role_id);
+            $user->syncRoles([$role->name]);
+
+            $this->dispatch(
+                'swal-toast',
+                icon: 'success',
+                title: 'Berhasil',
+                text: $message
+            );
+
             $this->showUserModal = false;
-            $this->reset(['userId', 'name', 'email', 'password', 'role_id']);
+
+            $this->reset([
+                'userId',
+                'name',
+                'email',
+                'password',
+                'role_id',
+            ]);
+
             $this->resetPage();
         }
 

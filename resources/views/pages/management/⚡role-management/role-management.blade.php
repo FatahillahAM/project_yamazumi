@@ -76,7 +76,6 @@
 
     {{-- It is not the man who has too little, but the man who craves more, that is poor. - Seneca --}}
     <flux:modal wire:model="showRoleModal" flyout variant="floating" class="md:w-2xl">
-
         <form wire:submit.prevent="save" class="space-y-6">
 
             {{-- HEADER --}}

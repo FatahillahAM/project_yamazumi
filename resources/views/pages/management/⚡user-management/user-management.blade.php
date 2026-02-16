@@ -69,7 +69,7 @@
 
                 @empty
                 <flux:table.row>
-                    <flux:table.cell align="center" colspan="3" class="py-8">
+                    <flux:table.cell align="center" colspan="5" class="py-8">
                         Tidak ada data tersedia
                     </flux:table.cell>
                 </flux:table.row>
@@ -110,8 +110,6 @@
             </flux:text>
             @enderror
 
-
-
             {{-- PASSWORD --}}
             <flux:input type="password" label="Password" placeholder="{{ $userId ? 'Kosongkan jika tidak diubah' : 'Masukkan password' }}" wire:model.defer="password" :description="$userId ? 'Kosongkan jika tidak diubah.' : null" />
             @error('password')
@@ -119,6 +117,16 @@
                 {{ $message }}
             </flux:text>
             @enderror
+
+
+            {{-- PASSWORD CONFIRMATION --}}
+            <flux:input type="password" label="Konfirmasi Password" placeholder="Ulangi password" wire:model.defer="password_confirmation" />
+            @error('password_confirmation')
+            <flux:text size="sm" class="text-rose-500 -mt-2">
+                {{ $message }}
+            </flux:text>
+            @enderror
+
 
             {{-- ROLE --}}
             <flux:select label="Role" placeholder="-- Pilih Role --" wire:model.defer="role_id">
