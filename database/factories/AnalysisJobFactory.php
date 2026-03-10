@@ -73,17 +73,9 @@ class AnalysisJobFactory extends Factory
      public function definition(): array
     {
         $jamKerjaDetik = 25920.0;
-
-        // target output realistis garmen
-        $outputHarian = $this->faker->numberBetween(250, 900);
-
-        // Takt Time
+        $outputHarian = $this->faker->numberBetween(100, 400);
         $taktTime = $jamKerjaDetik / $outputHarian;
-
-        // jumlah stasiun realistis
         $nStations = $this->faker->numberBetween(6, 16);
-
-        // generate CT tiap stasiun sekitar takt
         $cts = [];
 
         for ($i = 0; $i < $nStations; $i++) {
@@ -119,23 +111,11 @@ class AnalysisJobFactory extends Factory
         $totalCycleTime = array_sum($cts);
 
         $ctMax = max($cts);
-
-        // bottleneck
         $neckTimeMean = $ctMax;
-
-        // output aktual
         $lineOutputHari = intval($jamKerjaDetik / $neckTimeMean);
-
-        // operator teoritis
         $opTeoritis = $totalCycleTime / $taktTime;
-
-        // Line Efficiency
         $lineEfficiency = ($totalCycleTime / ($nStations * $ctMax)) * 100;
-
-        // Balance Delay
         $balanceDelay = 100 - $lineEfficiency;
-
-        // Smoothness Index
         $sum = 0;
 
         foreach ($cts as $ct) {
@@ -144,11 +124,8 @@ class AnalysisJobFactory extends Factory
 
         $smoothnessIndex = sqrt($sum);
 
-        // Robust metric
         $sigma = $this->faker->randomFloat(2, 2, 8);
-
         $neckTimeRobust = $neckTimeMean + (2 * $sigma);
-
         $lineRiskScore = $this->faker->randomFloat(2, 10, 60);
 
         return [

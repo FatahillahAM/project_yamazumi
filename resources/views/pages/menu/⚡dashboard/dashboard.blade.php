@@ -4,7 +4,6 @@
             <flux:heading size="lg" class="font-semibold">
                 Line Jas B — Sewing Dept.
             </flux:heading>
-
             <p class="text-sm text-gray-500 dark:text-gray-400 mt-1 font-medium">
                 Analisis Variabilitas & Robust Line Balancing ·
                 {{ $target }} pcs/hari · {{ $operators }} Operator
@@ -25,16 +24,12 @@
 
     {{-- KPI GRID --}}
     <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6">
-
         @foreach($kpis as $kpi)
-
             @php
                 $delta = $kpi['value'] - $kpi['target'];
-
                 $isGood = $kpi['direction'] === 'higher'
                     ? $delta >= 0
                     : $delta <= 0;
-
                 if ($delta == 0) {
                     $arrow = '→';
                     $color = 'text-yellow-500';
@@ -45,106 +40,75 @@
                     $arrow = '↓';
                     $color = 'text-red-500';
                 }
-
                 $note = "vs target {$kpi['target']}{$kpi['unit']}";
             @endphp
 
-
             <div class="group cursor-pointer transition duration-500 hover:-translate-y-2">
-
                 <flux:card class="relative overflow-hidden py-4 px-6 rounded-2xl shadow-md transition-all duration-500"
                     style="border-top:4px solid {{ $kpi['accent'] }}">
-
                     <div class="text-md font-semibold text-gray-700 dark:text-neutral-200">
                         {{ $kpi['label'] }}
                     </div>
-
                     <div class="mt-3 text-4xl font-bold tracking-tight text-gray-900 dark:text-white">
-                        {{ $kpi['value'] }}
+                        {{ number_format($kpi['value'], 1) }}
                         <span class="text-base font-medium text-gray-500 dark:text-neutral-400">
                             {{ $kpi['unit'] }}
                         </span>
                     </div>
-
                     <div class="mt-3 text-xs uppercase flex items-center gap-1 text-gray-500">
-
                         <span class="{{ $color }} font-semibold">
-                            {{ $arrow }} {{ abs($delta) }}{{ $kpi['unit'] }}
+                            {{ $arrow }} {{ number_format(abs($delta), 1) }}{{ $kpi['unit'] }}
                         </span>
-
                         <span>
                             {{ $note }}
                         </span>
-
                     </div>
-
                 </flux:card>
-
             </div>
-
         @endforeach
-
     </div>
-
 
     {{-- MAIN GRID --}}
     <div class="grid grid-cols-2 xl:grid-cols-4 gap-6">
-
-
         {{-- CHART --}}
         <flux:card class="bg-white dark:bg-neutral-900 shadow-sm xl:col-span-3">
-
-            <div class="flex items-center justify-between">
-                <div>
-                    <flux:heading size="md" class="font-semibold">
-                        Cycle Time per Stasiun
-                    </flux:heading>
-
-                    <p class="text-xs text-neutral-500 font-medium">
-                        Mean CT vs Robust CT (μ+2σ) ·
-                        Takt Time: {{ number_format($taktTime, 1) }}s
-                    </p>
-
-                </div>
-            </div>
-
+            <flux:heading size="md" class="mb-4 font-semibold">
+                Cycle Time per Stasiun
+                <flux:subheading class="flex items-center text-xs text-neutral-500 space-x-2">
+                    <span>
+                        Mean CT vs Robust CT (μ+2σ)
+                    </span>
+                    <span>·</span>
+                    <span> Takt Time: {{ number_format($taktTime, 1) }}s</span>
+                </flux:subheading>
+            </flux:heading>
 
             <div wire:ignore class="mt-4 border-t flex justify-center items-center w-full">
-
                 <div id="ctChart" class="h-70 w-full"></div>
-
             </div>
-
         </flux:card>
-
-
 
         {{-- STATION STATUS --}}
         <flux:card class="bg-white dark:bg-neutral-900 shadow-sm">
-
             <flux:heading size="md" class="mb-4 font-semibold">
                 Status Stasiun
-
-                <flux:subheading class="text-xs text-neutral-500 font-medium">
-                    {{ $operators }} Operator · Takt {{ number_format($taktTime, 1) }}s
+                <flux:subheading class="flex items-center text-xs text-neutral-500 space-x-2">
+                    <span>
+                        {{ $operators }} Operator
+                    </span>
+                    <span>·</span>
+                    <span> Takt Time: {{ number_format($taktTime, 1) }}s</span>
                 </flux:subheading>
-
             </flux:heading>
-
             <div class="pt-4 border-t"></div>
 
-
             <flux:table>
-
                 <flux:table.rows>
-
                     @foreach($stations as $i => $station)
-
                         @php
                             $ct = $meanCT[$i];
                             $cv = $cvData[$i];
                             $diff = $ct - $taktTime;
-
                             if ($ct > $taktTime) {
                                 $status = 'BOTTLENECK';
                                 $color = 'red';
@@ -160,95 +124,61 @@
                             }
                         @endphp
 
-
                         <flux:table.row>
-
                             <flux:table.cell>
-
                                 <div class="flex items-start gap-3">
-
                                     <div class="w-2 h-2 mt-2 rounded-full bg-{{ $color }}-500"></div>
-
                                     <div>
-
                                         <div class="font-medium text-sm">
                                             {{ $station }}
                                         </div>
-
                                         <div class="flex items-center gap-2 text-xs mt-1">
-
                                             <span
                                                 class="px-2 py-0.5 rounded-md bg-{{ $color }}-200 text-{{ $color }}-700 font-medium">
                                                 {{ $status }}
                                             </span>
-
                                             <span class="text-gray-400">
                                                 CV {{ number_format($cv, 1) }}%
                                             </span>
-
                                         </div>
-
                                     </div>
-
                                 </div>
-
                             </flux:table.cell>
 
-
                             <flux:table.cell align="center">
-
                                 <div class="font-semibold text-sm">
                                     {{ number_format($ct, 1) }}s
                                 </div>
-
                                 <div class="text-xs text-{{ $color }}-700">
-
                                     @if($diff > 0)
                                         +{{ number_format($diff, 1) }}s overflow
                                     @else
                                         Idle {{ number_format(abs($diff), 1) }}s
                                     @endif
-
                                 </div>
-
                             </flux:table.cell>
-
-
                         </flux:table.row>
-
                     @endforeach
-
                 </flux:table.rows>
-
             </flux:table>
-
         </flux:card>
-
     </div>
-
-
 
     {{-- WORK ELEMENT --}}
     <div class="grid grid-cols-1 xl:grid-cols-5 gap-6">
-
         <flux:card class="bg-white dark:bg-neutral-900 shadow-sm xl:col-span-2">
-
             <flux:heading size="md" class="mb-4 font-semibold">
-
                 Elemen Kerja
-
-                <flux:subheading class="text-xs text-neutral-500">
-                    Bottleneck Station
+                <flux:subheading class="flex items-center text-xs text-neutral-500 space-x-2">
+                    <span>Bottleneck Station</span>
+                    <span>·</span>
+                    <span>CT Mean: {{ number_format($meanCT[0], 1) }}s</span>
                 </flux:subheading>
-
             </flux:heading>
-
 
             <div class="border-t mb-3"></div>
 
-
             <flux:table>
-
                 <flux:table.columns>
                     <flux:table.column>Elemen</flux:table.column>
                     <flux:table.column align="center">Kategori</flux:table.column>
@@ -256,17 +186,14 @@
                     <flux:table.column align="center">Total</flux:table.column>
                 </flux:table.columns>
 
-
                 <flux:table.rows>
-
                     @foreach($elements as $el)
                         <flux:table.row>
                             <flux:table.cell>
                                 {{ $el->elemen_kerja }}
                             </flux:table.cell>
                             <flux:table.cell align="center">
-                                <flux:badge
-                                    color="{{ $el->kategori_va == 'VA' ? 'green' : ($el->kategori_va == 'N-NVA' ? 'yellow' : 'red') }}">
+                                <flux:badge size="sm" color="{{ $el->kategori_va == 'VA' ? 'green' : ($el->kategori_va == 'N-NVA' ? 'yellow' : 'red') }}">
                                     {{ $el->kategori_va }}
                                 </flux:badge>
                             </flux:table.cell>
@@ -287,27 +214,21 @@
 
         {{-- COMPARISON --}}
         <flux:card class="bg-white dark:bg-neutral-900 shadow-sm xl:col-span-3 overflow-hidden">
-            <div class="flex items-start justify-between">
-                <div>
-                    <flux:heading size="md" class="font-semibold">
-                        Perbandingan Optimasi
-                    </flux:heading>
-                    <flux:subheading class="text-xs text-neutral-500">
-                        Sebelum vs Sesudah
-                    </flux:subheading>
-                </div>
-            </div>
 
-            <div class="mt-4 border-t"></div>
+            <flux:heading size="md" class="font-semibold">
+                Perbandingan Optimasi
+                <flux:subheading class="text-xs text-neutral-500">
+                    Sebelum vs Sesudah Robust Balancing
+                </flux:subheading>
+            </flux:heading>
 
-            <div class="p-2 pb-0" wire:ignore>
-                <div id="comparisonChart" class="h-64"></div>
+            <div wire:ignore class="mt-4 border-t flex justify-center items-center w-full">
+                <div id="comparisonChart" class="h-70 w-full"></div>
             </div>
 
 
             <div class="grid grid-cols-3 gap-6 py-2 bg-gray-50 dark:bg-neutral-800 border-t">
                 @foreach($metrics as $m)
-
                     <div class="flex flex-col items-center">
                         <div class="text-xs uppercase text-gray-400 font-mono">
                             {{ $m['label'] }}
@@ -318,23 +239,16 @@
                             <span class="text-green-600">
                                 {{ $m['after'] }}
                             </span>
-
                         </div>
 
-
-                        <flux:badge color="green" class="text-[11px]">
+                        <flux:badge color="{{ $m['color'] }}" class="flex items-center text-[11px] space-x-1">
                             <flux:icon icon="{{ $m['icon'] }}" variant="micro" />
-                            {{ $m['delta'] }}
+                            <span>{{ $m['delta'] }}</span>
                         </flux:badge>
-
                     </div>
-
                 @endforeach
-
             </div>
-
         </flux:card>
-
     </div>
 </div>
 
@@ -594,7 +508,8 @@
 
             grid: {
                 borderColor: 'rgba(255,255,255,0.1)',
-                strokeDashArray: 4
+                strokeDashArray: 4,
+                padding: { left: 20, right: 60 }
             },
 
             legend: { position: 'bottom' }

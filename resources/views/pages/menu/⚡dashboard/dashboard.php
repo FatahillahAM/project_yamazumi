@@ -122,51 +122,70 @@ new
 
         }
 
-
         // ================= COMPARISON METRIC =================
+        $simulation = $job->simulations->first(); // ambil simulation pertama / terbaru
 
-        $this->metrics = [
+        if ($simulation) {
 
-            [
-                'label' => 'Line Efficiency',
-                'before' => $job->before_efficiency,
-                'after' => $job->line_efficiency,
-                'delta' => round($job->line_efficiency - $job->before_efficiency, 1) . '%',
-                'icon' => 'arrow-up'
-            ],
+            $lineEfficiencyDiff = $simulation->le_after - $simulation->le_before;
+            $balanceDelayDiff = $simulation->bd_after - $simulation->bd_before; // ubah urutan, supaya - = bagus
+            $outputDiff = $job->line_output_hari - $job->output_harian;
 
-            [
-                'label' => 'Balance Delay',
-                'before' => $job->before_balance_delay,
-                'after' => $job->balance_delay,
-                'delta' => round($job->before_balance_delay - $job->balance_delay, 1) . '%',
-                'icon' => 'arrow-down'
-            ],
+            $metrics = [
+                [
+                    'label' => 'Line Efficiency',
+                    'before' => $simulation->le_before,
+                    'after' => $simulation->le_after,
+                    'delta' => $lineEfficiencyDiff,
+                ],
+                [
+                    'label' => 'Balance Delay',
+                    'before' => $simulation->bd_before,
+                    'after' => $simulation->bd_after,
+                    'delta' => $balanceDelayDiff,
+                ],
+                [
+                    'label' => 'Output / Hari',
+                    'before' => $job->output_harian,
+                    'after' => $job->line_output_hari,
+                    'delta' => $outputDiff,
+                ],
+            ];
 
-            [
-                'label' => 'Output / Hari',
-                'before' => $job->before_output,
-                'after' => $job->line_output_hari,
-                'delta' => ($job->line_output_hari - $job->before_output) . ' pcs',
-                'icon' => 'arrow-up'
-            ]
+            $this->metrics = collect($metrics)->map(function ($m) {
 
-        ];
+                $diff = $m['delta'];
 
+                // Format before / after / delta
+                if ($m['label'] === 'Output / Hari') {
+                    $m['before'] = $m['before'] . ' pcs';
+                    $m['after'] = $m['after'] . ' pcs';
+                    $m['delta'] = $diff . ' pcs';
+                } else {
+                    $m['before'] = number_format($m['before'], 2) . '%';
+                    $m['after'] = number_format($m['after'], 2) . '%';
+                    $m['delta'] = number_format($diff, 2) . '%';
+                }
+
+                // Icon & color
+                if ($m['label'] === 'Balance Delay') {
+                    // Turun = bagus → hijau
+                    $m['icon'] = $diff <= 0 ? 'arrow-down' : 'arrow-up';
+                    $m['color'] = $diff <= 0 ? 'green' : 'red';
+                } else {
+                    // Naik = bagus
+                    $m['icon'] = $diff >= 0 ? 'arrow-up' : 'arrow-down';
+                    $m['color'] = $diff >= 0 ? 'green' : 'red';
+                }
+
+                return $m;
+            })->toArray();
+
+        } else {
+            $this->metrics = [];
+        }
 
         // ================= DATA UNTUK CHART =================
-
-        // $this->beforeData = [
-        //     $job->before_efficiency,
-        //     $job->before_balance_delay,
-        //     $job->before_output
-        // ];
-
-        // $this->afterData = [
-        //     $job->line_efficiency,
-        //     $job->balance_delay,
-        //     $job->line_output_hari
-        // ];
         $simulation = SimulationResult::where('job_id', $job->id)->first();
         $stationsBefore = StationResult::where('job_id', $job->id)
             ->orderBy('station_order')

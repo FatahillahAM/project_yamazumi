@@ -22,4 +22,19 @@ class SimulationResult extends Model
     {
         return $this->belongsTo(User::class);
     }
+
+    public function actions()
+    {
+        return $this->hasMany(SimulationAction::class, 'simulation_id');
+    }
+
+    public function kaizens()
+    {
+        return $this->actions()->where('action_type', 'kaizen');
+    }
+
+    public function redistributions()
+    {
+        return $this->actions()->where('action_type', 'redistribution');
+    }
 }

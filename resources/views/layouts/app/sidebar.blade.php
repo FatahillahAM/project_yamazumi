@@ -29,6 +29,10 @@
                 :current="request()->routeIs('menu.report')" wire:navigate>
                 Report Analyst
             </flux:sidebar.item>
+            <flux:sidebar.item icon="arrow-path" :href="route('menu.simulation')"
+                :current="request()->routeIs('menu.simulation')" wire:navigate>
+                Simulation
+            </flux:sidebar.item>
 
             @php
                 $isUserManagementActive = request()->routeIs(
@@ -56,7 +60,8 @@
         </flux:sidebar.nav>
 
         <flux:sidebar.spacer />
-        <flux:sidebar.item icon="sun" tooltip="$flux.appearance === 'dark' ? 'Light Mode' : 'Dark Mode'" x-on:click="$flux.appearance = $flux.appearance === 'dark' ? 'light' : 'dark'" class="cursor-pointer">
+        <flux:sidebar.item icon="sun" tooltip="$flux.appearance === 'dark' ? 'Light Mode' : 'Dark Mode'"
+            x-on:click="$flux.appearance = $flux.appearance === 'dark' ? 'light' : 'dark'" class="cursor-pointer">
             <span x-text="$flux.appearance === 'dark' ? 'Light Mode' : 'Dark Mode'"></span>
         </flux:sidebar.item>
         <flux:dropdown position="top" align="start" class="max-lg:hidden">

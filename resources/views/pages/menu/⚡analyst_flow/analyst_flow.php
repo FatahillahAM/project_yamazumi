@@ -3,40 +3,49 @@
 use Livewire\Attributes\Title;
 use Livewire\Component;
 use Livewire\WithFileUploads;
+use App\Models\AnalysisJob;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 
 new
-    #[Title('Setup Analyst')]
-    class extends Component {
+#[Title('Setup Analyst')]
+class extends Component {
 
     use WithFileUploads;
 
     public $step = 1;
 
-    public $nama_line;
-    public $nama_bagian;
+    public $line_name;
+    public $part_name;
     public $output_harian;
     public $brand;
-    public $style_product;
+    public $style;
 
-    public $station_names = [];
     public $file_list = [];
+    public $station_name = [];
 
     public $effectiveHours = 7.2;
 
-    public function mount()
+    protected $rules = [
+
+        'line_name' => 'required|string|max:100',
+        'part_name' => 'nullable|string|max:150',
+        'style' => 'nullable|string|max:100',
+        'brand' => 'nullable|string|max:100',
+        'output_harian' => 'required|integer|min:1',
+
+        'file_list.*' => 'required|file|mimes:mp4,avi,mov,mkv,mts|max:204800',
+        'station_name.*' => 'required|string|max:100',
+    ];
+
+    public function updated($field)
     {
-        $this->detectStep();
+        $this->updateStep();
     }
 
-    private function detectStep()
+    private function updateStep()
     {
-        if (
-            $this->nama_line &&
-            $this->nama_bagian &&
-            $this->output_harian &&
-            $this->brand &&
-            $this->style_product
-        ) {
+        if ($this->line_name && $this->output_harian) {
             $this->step = 2;
         }
 
@@ -45,107 +54,79 @@ new
         }
     }
 
-    public function updated($property)
+    public function updatedFileList()
     {
-        $this->detectStep();
-    }
+        foreach ($this->file_list as $i => $file) {
 
-    public function removeVideo($index)
-    {
-        unset($this->file_list[$index]);
-        unset($this->station_names[$index]);
+            if (!isset($this->station_name[$i])) {
 
-        // reset index supaya sinkron
-        $this->file_list = array_values($this->file_list);
-        $this->station_names = array_values($this->station_names);
-
-        $this->detectStep();
-    }
-
-    public static function taktTime(float $effectiveHours, int $output_harian): ?float
-    {
-        $effectiveSeconds = $effectiveHours * 3600;
-
-        if ($output_harian > 0) {
-            return round($effectiveSeconds / $output_harian, 2);
+                $this->station_name[$i] = pathinfo(
+                    $file->getClientOriginalName(),
+                    PATHINFO_FILENAME
+                );
+            }
         }
+    }
 
-        return null;
+    public function removeVideo($i)
+    {
+        unset($this->file_list[$i]);
+        unset($this->station_name[$i]);
+
+        $this->file_list = array_values($this->file_list);
+        $this->station_name = array_values($this->station_name);
     }
 
     public function getTaktTimeProperty()
     {
-        return self::taktTime($this->effectiveHours, (int) $this->output_harian);
-    }
+        if (!$this->output_harian) return null;
 
-    public function updatedFileList()
-    {
-        try {
+        $seconds = $this->effectiveHours * 3600;
 
-            $this->validateOnly('file_list.*', [
-                'file_list.*' => 'required|file|mimes:mp4,avi,mov,mkv|max:204800',
-            ]);
-
-            foreach ($this->file_list as $index => $file) {
-
-                if (!isset($this->station_names[$index])) {
-
-                    $this->station_names[$index] = pathinfo(
-                        $file->getClientOriginalName(),
-                        PATHINFO_FILENAME
-                    );
-                }
-            }
-
-            // rapikan index
-            $this->station_names = array_values($this->station_names);
-
-            $this->step = 3;
-
-        } catch (\Throwable $e) {
-
-            $this->file_list = [];
-            $this->station_names = [];
-
-            $this->dispatch(
-                'swal-toast',
-                icon: 'error',
-                title: 'Format Tidak Didukung',
-                text: 'Hanya file video maksimal 200MB yang diperbolehkan.'
-            );
-
-            throw $e;
-        }
+        return round($seconds / $this->output_harian, 2);
     }
 
     public function resetForm()
     {
-        $this->reset([
-            'nama_line',
-            'nama_bagian',
-            'output_harian',
-            'brand',
-            'style_product',
-            'file_list',
-            'station_names'
-        ]);
+        $this->reset();
         $this->step = 1;
     }
 
     public function save()
     {
-        foreach ($this->file_list as $index => $file) {
 
-            $name = $this->station_names[$index] ?? pathinfo(
-                $file->getClientOriginalName(),
-                PATHINFO_FILENAME
-            );
+        $this->validate();
 
-            $extension = $file->getClientOriginalExtension();
+        $job = AnalysisJob::create([
+
+            'user_id' => Auth::id(),
+
+            'line_name' => $this->line_name,
+            'part_name' => $this->part_name,
+            'style' => $this->style,
+            'brand' => $this->brand,
+
+            'output_harian' => $this->output_harian,
+
+            'jam_kerja_detik' => $this->effectiveHours * 3600,
+
+            'takt_time' => $this->taktTime,
+
+            'n_stations' => count($this->file_list),
+
+            'status' => 'processing',
+        ]);
+
+        foreach ($this->file_list as $i => $file) {
+
+            $name = $this->station_name[$i];
 
             $file->storeAs(
-                'analisis_videos',
-                $name . '.' . $extension,
+
+                "analisis_videos/$job->id",
+
+                $name . '.' . $file->getClientOriginalExtension(),
+
                 'public'
             );
         }
@@ -157,16 +138,6 @@ new
             text: 'Video berhasil diupload.'
         );
 
-        $this->reset([
-            'nama_line',
-            'nama_bagian',
-            'output_harian',
-            'brand',
-            'style_product',
-            'file_list',
-            'station_names'
-        ]);
-
-        $this->step = 1;
+        $this->redirectRoute('menu.report', navigate: true);
     }
 };

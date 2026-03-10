@@ -135,7 +135,7 @@ return [
         'middleware' => null,                                 // Example: 'throttle:5,1'            | Default: 'throttle:60,1'
         'preview_mimes' => [                                  // Supported file types for temporary pre-signed file URLs...
             'png', 'gif', 'bmp', 'svg', 'wav', 'mp4',
-            'mov', 'avi', 'wmv', 'mp3', 'm4a',
+            'mov', 'avi', 'wmv', 'mp3', 'm4a', 'mts',
             'jpg', 'jpeg', 'mpga', 'webp', 'wma',
         ],
         'max_upload_time' => 5, // Max duration (in minutes) before an upload is invalidated...

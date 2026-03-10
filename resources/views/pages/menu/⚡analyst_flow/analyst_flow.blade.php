@@ -66,17 +66,17 @@
     <form wire:submit.prevent="save" class="space-y-6">
         <div class="space-y-4">
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <flux:input label="Nama Line" required wire:model.defer="nama_line" placeholder="Jas A"
+                <flux:input label="Nama Line" required wire:model.defer="line_name" placeholder="Jas A"
                     class="font-medium" />
-                @error('nama_line')
+                @error('line_name')
                     <flux:text size="md" class="text-rose-500 mt-1">
                         {{ $message }}
                     </flux:text>
                 @enderror
 
-                <flux:input label="Nama Bagian" required wire:model.defer="nama_bagian" placeholder="Front"
+                <flux:input label="Nama Bagian" required wire:model.defer="part_name" placeholder="Front"
                     class="font-medium" />
-                @error('nama_bagian')
+                @error('part_name')
                     <flux:text size="md" class="text-rose-500 mt-1">
                         {{ $message }}
                     </flux:text>
@@ -90,9 +90,9 @@
                     </flux:text>
                 @enderror
 
-                <flux:input label="Style Product" required wire:model.defer="style_product" placeholder="Man Jas 2P"
+                <flux:input label="Style Product" required wire:model.defer="style" placeholder="Man Jas 2P"
                     class="font-medium" />
-                @error('style_product')
+                @error('style')
                     <flux:text size="md" class="text-rose-500 mt-1">
                         {{ $message }}
                     </flux:text>
@@ -138,11 +138,13 @@
                     <flux:badge color="blue" size="sm">.avi</flux:badge>
                     <flux:badge color="blue" size="sm">.mov</flux:badge>
                     <flux:badge color="blue" size="sm">.mkv</flux:badge>
+                    <flux:badge color="blue" size="sm">.mts</flux:badge>
+
                 </div>
             </div>
 
             <flux:file-upload wire:model.live="file_list" multiple
-                accept="video/mp4,video/quicktime,video/x-msvideo,video/x-matroska">
+                accept=".mp4,.avi,.mov,.mkv,.mts">
                 <flux:file-upload.dropzone class="min-h-[220px] flex flex-col items-center justify-center
                rounded-2xl border-2 border-dashed
                border-slate-300 dark:border-slate-600
@@ -187,7 +189,7 @@
                             </flux:file-item>
 
                             <div class="flex flex-col gap-2">
-                                <flux:input label="Nama Stasiun" wire:model.defer="station_names.{{ $index }}" class="w-52" />
+                                <flux:input label="Nama Stasiun" wire:model.defer="station_name.{{ $index }}" class="w-52" />
                                 <flux:text size="xs" class="text-slate-400">
                                     Nama ini akan digunakan sebagai nama file saat disimpan
                                 </flux:text>
@@ -200,14 +202,95 @@
 
         {{-- ACTION --}}
         <div class="pt-2 flex justify-end gap-2">
-            <flux:button wire:click="resetForm" variant="filled" class="px-6 disabled:cursor-not-allowed disabled:opacity-50">
+            <flux:button wire:click="resetForm" variant="filled"
+                class="px-6 disabled:cursor-not-allowed disabled:opacity-50">
                 Reset
             </flux:button>
 
-            <flux:link as="button" variant="subtle" href="{{ route('menu.report') }}" icon="exclamation-circle" icon:variant="outline" type="submit" class="!bg-[#2A5298] !text-white px-4 py-2 rounded-lg text-sm disabled:!cursor-not-allowed disabled:!opacity-50"
+            {{-- <flux:link as="button" variant="subtle" href="{{ route('menu.report') }}" icon="exclamation-circle"
+                icon:variant="outline" type="submit"
+                class="!bg-[#2A5298] !text-white px-4 py-2 rounded-lg text-sm disabled:!cursor-not-allowed disabled:!opacity-50"
                 :disabled="$step < 3">
                 Mulai Analisis
-            </flux:link>
+            </flux:link> --}}
+            <flux:button type="submit" variant="filled"
+                class="!bg-[#2A5298] !text-white px-4 py-2 rounded-lg text-sm disabled:cursor-not-allowed disabled:opacity-50"
+                :disabled="$step < 3">
+                Mulai Analisis
+            </flux:button>
         </div>
     </form>
+
+    <div wire:loading.flex wire:target="save"
+        class="fixed inset-0 z-[9999] items-center justify-center bg-slate-900/60 backdrop-blur-md">
+        <div
+            class="relative w-full max-w-xl bg-white dark:bg-neutral-900 rounded-3xl shadow-2xl p-8 space-y-6 animate-[fadeUp_.35s_ease]">
+            <!-- HEADER -->
+            <div class="flex items-center gap-4">
+                <div class="w-7 h-7 border-[3px] border-indigo-200 border-t-indigo-600 rounded-full animate-spin"></div>
+                <div>
+                    <div class="text-sm font-semibold text-slate-800 dark:text-white">
+                        Menganalisis Video…
+                    </div>
+                    <div class="text-xs text-slate-500">
+                        MediaPipe Pose sedang mendeteksi aktivitas operator
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- GLOBAL PROGRESS -->
+            <div class="space-y-2">
+                <div class="flex justify-between text-xs text-slate-500">
+                    <span>Phase 1 — Frame Extraction</span>
+                    <span>AI Processing</span>
+                </div>
+
+                <div class="relative h-2 bg-slate-200 dark:bg-neutral-800 rounded-full overflow-hidden">
+                    <div
+                        class="absolute inset-y-0 w-1/3 bg-gradient-to-r from-transparent via-indigo-500 to-transparent animate-[shimmer_2s_linear_infinite]">
+                    </div>
+                </div>
+            </div>
+
+            <!-- CONSOLE -->
+            <div class="bg-slate-900 text-slate-300 text-[11px] font-mono rounded-lg p-3 h-[90px] overflow-hidden">
+                <div class="animate-pulse">> Initializing AI model...</div>
+                <div class="animate-pulse">> Loading MediaPipe Pose...</div>
+                <div class="animate-pulse">> Extracting frames...</div>
+                <div class="animate-pulse">> Detecting operator movement...</div>
+            </div>
+
+            <!-- STATUS -->
+            <div class="flex items-center justify-center gap-2">
+                <span class="flex h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                <span class="text-[10px] uppercase tracking-[0.2em] font-semibold text-slate-400">
+                    AI Processing Pipeline
+                </span>
+            </div>
+        </div>
+    </div>
+    <style>
+        @keyframes shimmer {
+            0% {
+                transform: translateX(-100%);
+            }
+
+            100% {
+                transform: translateX(300%);
+            }
+        }
+
+        @keyframes fadeUp {
+            0% {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            100% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
 </div>
